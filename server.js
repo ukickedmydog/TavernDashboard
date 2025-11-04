@@ -16,7 +16,7 @@ const PORT = 3000;
 // ----------------------------------------------------
 const CLIENT_ID = "287afxhyn3b4kz73zo1hc3x0i8a2mp";
 const CLIENT_SECRET = "7ayxsctnd4ase6iqsinj01cloqszua";  // replace with your own
-const REDIRECT_URI = "http://localhost:3000/auth/twitch/callback";
+const REDIRECT_URI = "https://taverndashboard.onrender.com/auth/twitch/callback";
 
 // ----------------------------------------------------
 // ----------------------------------------------------
