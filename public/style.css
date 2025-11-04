@@ -1,0 +1,52 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&display=swap');
+
+body {
+  background: url('https://i.imgur.com/nO2zH0E.jpg') center/cover no-repeat fixed;
+  color: #e6d7b8;
+  font-family: 'Cinzel', serif;
+  height: 100vh;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.container {
+  text-align: center;
+}
+
+.card {
+  background: rgba(40, 35, 28, 0.95);
+  border: 2px solid #d3b474;
+  box-shadow: 0 0 30px rgba(255, 220, 160, 0.3);
+  border-radius: 12px;
+  padding: 40px 60px;
+  max-width: 600px;
+}
+
+h1 {
+  color: #f0d49b;
+  font-size: 2em;
+  text-shadow: 0 0 10px #b28a44;
+}
+
+p {
+  font-size: 1.1em;
+  margin-bottom: 30px;
+}
+
+.btn {
+  text-decoration: none;
+  color: #2a1e0e;
+  background: #e6c06d;
+  padding: 12px 30px;
+  border-radius: 8px;
+  font-weight: bold;
+  box-shadow: 0 0 10px rgba(255, 235, 160, 0.6);
+  transition: all 0.2s ease-in-out;
+}
+
+.btn:hover {
+  background: #f5d890;
+  transform: scale(1.05);
+}
