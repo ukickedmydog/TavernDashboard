@@ -2,13 +2,13 @@
     "playerList": [
         {
             "username": "dogoftheoccult",
-            "gold": 50,
+            "gold": 75,
             "health": 100,
             "drunkenness": 0,
-            "honour": 0,
-            "questsCompleted": 0,
+            "honour": 5,
+            "questsCompleted": 1,
             "lastDailyClaim": "",
-            "lastQuestDate": "",
+            "lastQuestDate": "2025-11-05",
             "currentTitle": "Regular",
             "titles": [
                 "Regular"
