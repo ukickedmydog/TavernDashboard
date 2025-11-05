@@ -74,6 +74,10 @@ app.get("/status", (req, res) => {
   try {
     const json = fs.readFileSync(PLAYER_DATA_PATH, "utf8");
     const parsed = JSON.parse(json);
+	const lastUpdated = parsed.lastUpdated
+  ? new Date(parsed.lastUpdated).toLocaleString()
+  : "Unknown";
+
 
     // Match your PlayerListWrapper structure
     const player = parsed.players?.find(p => p.username === user);
@@ -111,6 +115,10 @@ app.get("/status", (req, res) => {
           <p><b>Honour:</b> ${player.honour}</p>
           <p><b>Inventory:</b> ${player.inventory?.join(", ") || "None"}</p>
           <p><b>Quests Completed:</b> ${player.questsCompleted}</p>
+		  <p style="font-size: 0.9em; color: #bda676;">
+  Last updated: ${lastUpdated}
+</p>
+
         </div>
       </body>
       </html>
@@ -122,18 +130,30 @@ app.get("/status", (req, res) => {
 });
 
 // ====================================================
-//  API: receive updated TavernPlayers.json from Unity
+//  Secure upload endpoint (requires UPLOAD_KEY header)
 // ====================================================
 app.post("/api/upload", express.json({ limit: "5mb" }), (req, res) => {
+  const auth = req.headers.authorization;
+  if (auth !== `Bearer ${process.env.UPLOAD_KEY}`)
+    return res.status(401).send("Unauthorized");
+
   try {
-    fs.writeFileSync("./TavernPlayers.json", JSON.stringify(req.body, null, 2));
-    console.log("✅ Player data updated by Unity.");
+    const { lastUpdated, data } = req.body;
+    const wrapped = {
+      lastUpdated: lastUpdated || new Date().toISOString(),
+      players: data.playerList || data.players || []
+    };
+
+    fs.writeFileSync("./TavernPlayers.json", JSON.stringify(wrapped, null, 2));
+    console.log(`✅ Player data updated (${wrapped.players.length} players).`);
     res.json({ success: true });
   } catch (err) {
     console.error("❌ Failed to save player data:", err);
     res.status(500).json({ success: false, error: err.message });
   }
 });
+
+
 
 
 app.listen(PORT, () =>
