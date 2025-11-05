@@ -2,27 +2,12 @@
     "playerList": [
         {
             "username": "dogoftheoccult",
-            "gold": 75,
-            "health": 100,
-            "drunkenness": 0,
-            "honour": 5,
-            "questsCompleted": 1,
-            "lastDailyClaim": "",
-            "lastQuestDate": "2025-11-05",
-            "currentTitle": "Regular",
-            "titles": [
-                "Regular"
-            ],
-            "inventory": []
-        },
-        {
-            "username": "ukmdbot",
-            "gold": 100,
+            "gold": 45,
             "health": 100,
             "drunkenness": 0,
             "honour": 0,
             "questsCompleted": 0,
-            "lastDailyClaim": "2025-11-05T21:55:54.8362523Z",
+            "lastDailyClaim": "",
             "lastQuestDate": "",
             "currentTitle": "Regular",
             "titles": [
