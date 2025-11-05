@@ -117,9 +117,24 @@ app.get("/status", (req, res) => {
           <p><b>Quests Completed:</b> ${player.questsCompleted}</p>
 		  <p style="font-size: 0.9em; color: #bda676;">
   Last updated: ${lastUpdated}
+  <p id="timer" style="font-size: 0.8em; color: #99855c;"></p>
+
 </p>
 
         </div>
+<script>
+  let seconds = 60;
+  const timerEl = document.getElementById("timer");
+  const tick = () => {
+    timerEl.textContent = "Refreshing in " + seconds + "s...";
+    seconds--;
+    if (seconds <= 0) location.reload();
+  };
+  tick();
+  setInterval(tick, 1000);
+</script>
+
+
       </body>
       </html>
     `);
