@@ -42,37 +42,38 @@ function normalizeData(rawJson) {
   try {
     parsed = JSON.parse(rawJson);
   } catch {
-    // If somehow corrupted, reset to blank
     parsed = { lastUpdated: "Never", players: [] };
   }
 
-  // Accept: { players: [...] } OR { playerList: [...] } OR raw array [...]
+  // Handle different possible root layouts
+  const data = parsed.data || parsed;
   const players =
-    parsed.players ||
-    parsed.playerList ||
-    (Array.isArray(parsed) ? parsed : []);
+    data.players ||
+    data.playerList ||
+    (Array.isArray(data) ? data : []);
 
-  // Normalize usernames and ensure required fields exist
-  const normalizedPlayers = players
-    .filter(Boolean)
-    .map((p) => ({
-      username: (p.username || "").toString(),
-      usernameLower: (p.username || "").toString().toLowerCase(),
-      currentTitle: p.currentTitle || "Tavern Regular",
-      gold: Number.isFinite(p.gold) ? p.gold : 0,
-      health: Number.isFinite(p.health) ? p.health : 100,
-      drunkenness: Number.isFinite(p.drunkenness) ? p.drunkenness : 0,
-      honour: Number.isFinite(p.honour) ? p.honour : 0,
-      questsCompleted: Number.isFinite(p.questsCompleted) ? p.questsCompleted : 0,
+  // Normalize players
+  const normalizedPlayers = players.map((p) => {
+    const uname = p.username || p.name || p.user || "";
+    return {
+      username: uname,
+      usernameLower: uname.toLowerCase(),
+      currentTitle: p.currentTitle || "Regular",
+      titles: Array.isArray(p.titles) ? p.titles : ["Regular"],
+      gold: p.gold ?? 0,
+      health: p.health ?? 100,
+      drunkenness: p.drunkenness ?? 0,
+      honour: p.honour ?? 0,
+      questsCompleted: p.questsCompleted ?? 0,
       inventory: Array.isArray(p.inventory) ? p.inventory : [],
-    }));
+    };
+  });
 
-  const lastUpdated =
-    parsed.lastUpdated ||
-    new Date().toISOString(); // keep something meaningful
+  const lastUpdated = parsed.lastUpdated || new Date().toISOString();
 
   return { lastUpdated, players: normalizedPlayers };
 }
+
 
 function loadLedger() {
   const raw = safeReadFile(PLAYER_DATA_PATH);
