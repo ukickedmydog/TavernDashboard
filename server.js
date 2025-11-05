@@ -5,6 +5,7 @@ import fs from "fs";
 import path from "path";
 import cors from "cors";
 import fetch from "node-fetch";
+import session from "express-session";
 
 const app = express();
 app.use(cors());
@@ -19,6 +20,21 @@ const CLIENT_SECRET = process.env.TWITCH_CLIENT_SECRET || "YOUR_CLIENT_SECRET";
 const REDIRECT_URI =
   process.env.REDIRECT_URI ||
   "https://taverndashboard.onrender.com/auth/twitch/callback";
+  
+  const app = express();
+app.use(cors());
+app.use(express.static("public"));
+app.use(express.json());
+
+// 🔐 Simple session setup
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || "tavernsecret",
+    resave: false,
+    saveUninitialized: true,
+  })
+);
+
 
 // 📄 Where the data file lives (repo root on Render)
 const PLAYER_DATA_PATH = path.resolve("./TavernPlayers.json");
@@ -127,7 +143,11 @@ app.get("/auth/twitch/callback", async (req, res) => {
   const username = userData?.data?.[0]?.login?.toLowerCase();
 
   if (!username) return res.status(400).send("Could not fetch Twitch user.");
-  res.redirect(`/status?user=${encodeURIComponent(username)}`);
+  // Store their username in the session
+req.session.username = username;
+console.log(`[LOGIN] ${username} logged in.`);
+res.redirect("/");
+
 });
 
 // ----------------------------------------------------
@@ -173,6 +193,67 @@ app.get("/api/all", (req, res) => {
   const ledger = loadLedger();
   res.json(ledger);
 });
+
+app.get("/", (req, res) => {
+  const user = req.session.username;
+
+  // If logged in → redirect straight to their status page
+  if (user) {
+    return res.redirect(`/status?user=${encodeURIComponent(user)}`);
+  }
+
+  // Otherwise → show login page
+  res.send(`
+    <html>
+    <head>
+      <title>Tavern Dashboard</title>
+      <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&display=swap" rel="stylesheet">
+      <style>
+        body {
+          background: #1c1a18;
+          color: #d9c79e;
+          font-family: 'Cinzel', serif;
+          text-align: center;
+          padding: 80px;
+        }
+        .card {
+          border: 2px solid #a27c49;
+          border-radius: 12px;
+          padding: 40px;
+          display: inline-block;
+          background: #2a2623;
+          box-shadow: 0 0 20px rgba(255,220,160,0.1);
+        }
+        a.button {
+          display: inline-block;
+          padding: 12px 30px;
+          background: #a27c49;
+          color: #1c1a18;
+          text-decoration: none;
+          border-radius: 6px;
+          font-weight: bold;
+          font-size: 18px;
+        }
+        a.button:hover { background: #d4a96f; }
+      </style>
+    </head>
+    <body>
+      <div class="card">
+        <h1>Welcome to the Tavern Dashboard</h1>
+        <p>View your adventurer's stats and honour within the Tavern.</p>
+        <a href="/auth/twitch" class="button">Login with Twitch</a>
+      </div>
+    </body>
+    </html>
+  `);
+});
+
+app.get("/logout", (req, res) => {
+  req.session.destroy(() => {
+    res.redirect("/");
+  });
+});
+
 
 // ----------------------------------------------------
 // Status page
