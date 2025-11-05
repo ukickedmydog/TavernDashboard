@@ -21,7 +21,7 @@ const REDIRECT_URI = "https://taverndashboard.onrender.com/auth/twitch/callback"
 // ----------------------------------------------------
 // ----------------------------------------------------
 //  Location of Unity save file
-const PLAYER_DATA_PATH = "C:/Users/maffy/AppData/LocalLow/DefaultCompany/RebelsTavern/TavernPlayers.json";
+const PLAYER_DATA_PATH = path.resolve("./TavernPlayers.json");
 
 // ====================================================
 //  STEP 1 — Twitch OAuth login
@@ -120,6 +120,21 @@ app.get("/status", (req, res) => {
     res.status(500).send("Error reading player file: " + err.message);
   }
 });
+
+// ====================================================
+//  API: receive updated TavernPlayers.json from Unity
+// ====================================================
+app.post("/api/upload", express.json({ limit: "5mb" }), (req, res) => {
+  try {
+    fs.writeFileSync("./TavernPlayers.json", JSON.stringify(req.body, null, 2));
+    console.log("✅ Player data updated by Unity.");
+    res.json({ success: true });
+  } catch (err) {
+    console.error("❌ Failed to save player data:", err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 
 app.listen(PORT, () =>
   console.log(`🍺 Tavern Dashboard running at http://localhost:${PORT}`)
