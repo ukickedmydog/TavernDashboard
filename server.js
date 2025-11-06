@@ -7,7 +7,6 @@ import cors from "cors";
 import fetch from "node-fetch";
 import session from "express-session";
 
-const app = express();
 app.use(cors());
 app.use(express.static("public"));
 
