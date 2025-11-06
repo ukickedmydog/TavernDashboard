@@ -1,28 +1,40 @@
-// server.js (ESM)
-// ----------------------------------------------------
+// server.js
+// ==========================================
+// Tavern Dashboard – Express + Twitch OAuth
+// ==========================================
+
 import express from "express";
+import session from "express-session";
 import fs from "fs";
 import path from "path";
 import cors from "cors";
 import fetch from "node-fetch";
-import session from "express-session";
 
+// ==========================================
+// CONFIGURATION
+// ==========================================
 const PORT = process.env.PORT || 3000;
 
-// 🔐 Twitch app credentials
-const CLIENT_ID = process.env.TWITCH_CLIENT_ID || "YOUR_CLIENT_ID";
-const CLIENT_SECRET = process.env.TWITCH_CLIENT_SECRET || "YOUR_CLIENT_SECRET";
-// Make sure this matches your Twitch app exactly
+// Twitch credentials (from Render environment variables)
+const CLIENT_ID = process.env.TWITCH_CLIENT_ID;
+const CLIENT_SECRET = process.env.TWITCH_CLIENT_SECRET;
 const REDIRECT_URI =
   process.env.REDIRECT_URI ||
   "https://taverndashboard.onrender.com/auth/twitch/callback";
-  
-  const app = express();
+
+// Player data file path
+const PLAYER_DATA_PATH =
+  process.env.PLAYER_DATA_PATH || path.resolve("./TavernPlayers.json");
+
+// ==========================================
+// APP INITIALIZATION
+// ==========================================
+const app = express();
 app.use(cors());
 app.use(express.static("public"));
 app.use(express.json());
 
-// 🔐 Simple session setup
+// 🔐 Session handling
 app.use(
   session({
     secret: process.env.SESSION_SECRET || "tavernsecret",
@@ -31,18 +43,13 @@ app.use(
   })
 );
 
-
-// 📄 Where the data file lives (repo root on Render)
-const PLAYER_DATA_PATH = path.resolve("./TavernPlayers.json");
-
-// ----------------------------------------------------
-// Helpers: load + normalize player data
-// ----------------------------------------------------
+// ==========================================
+// UTILITIES
+// ==========================================
 function safeReadFile(p) {
   try {
     return fs.readFileSync(p, "utf8");
   } catch {
-    // Create a minimal file if missing
     const blank = { lastUpdated: "Never", players: [] };
     fs.writeFileSync(p, JSON.stringify(blank, null, 2));
     return JSON.stringify(blank);
@@ -57,14 +64,11 @@ function normalizeData(rawJson) {
     parsed = { lastUpdated: "Never", players: [] };
   }
 
-  // Handle different possible root layouts
+  // Accept multiple root layouts
   const data = parsed.data || parsed;
   const players =
-    data.players ||
-    data.playerList ||
-    (Array.isArray(data) ? data : []);
+    data.players || data.playerList || (Array.isArray(data) ? data : []);
 
-  // Normalize players
   const normalizedPlayers = players.map((p) => {
     const uname = p.username || p.name || p.user || "";
     return {
@@ -82,10 +86,8 @@ function normalizeData(rawJson) {
   });
 
   const lastUpdated = parsed.lastUpdated || new Date().toISOString();
-
   return { lastUpdated, players: normalizedPlayers };
 }
-
 
 function loadLedger() {
   const raw = safeReadFile(PLAYER_DATA_PATH);
@@ -99,15 +101,14 @@ function getPlayerByLogin(login) {
   return { ledger, player: found };
 }
 
-// ----------------------------------------------------
-// OAuth: Start + Callback
-// ----------------------------------------------------
+// ==========================================
+// TWITCH OAUTH ROUTES
+// ==========================================
 app.get("/auth/twitch", (req, res) => {
   const authUrl =
-    `https://id.twitch.tv/oauth2/authorize?` +
-    `client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(
-      REDIRECT_URI
-    )}&response_type=code&scope=user:read:email`;
+    `https://id.twitch.tv/oauth2/authorize?client_id=${CLIENT_ID}` +
+    `&redirect_uri=${encodeURIComponent(REDIRECT_URI)}` +
+    `&response_type=code&scope=user:read:email`;
   res.redirect(authUrl);
 });
 
@@ -128,6 +129,10 @@ app.get("/auth/twitch/callback", async (req, res) => {
   });
 
   const token = await tokenRes.json();
+  if (!token.access_token) {
+    console.error("OAuth token fetch failed:", token);
+    return res.status(400).send("Failed to get access token.");
+  }
 
   const userRes = await fetch("https://api.twitch.tv/helix/users", {
     headers: {
@@ -139,25 +144,30 @@ app.get("/auth/twitch/callback", async (req, res) => {
   const username = userData?.data?.[0]?.login?.toLowerCase();
 
   if (!username) return res.status(400).send("Could not fetch Twitch user.");
-  // Store their username in the session
-req.session.username = username;
-console.log(`[LOGIN] ${username} logged in.`);
-res.redirect("/");
 
+  // Save username in session
+  req.session.username = username;
+  console.log(`[LOGIN] ${username} logged in.`);
+  res.redirect("/");
 });
 
-// ----------------------------------------------------
-// Secure upload endpoint (Unity → Render live sync)
-// Requires: header Authorization: Bearer <UPLOAD_KEY>
-// ----------------------------------------------------
+app.get("/logout", (req, res) => {
+  req.session.destroy(() => {
+    res.redirect("/");
+  });
+});
+
+// ==========================================
+// UNITY UPLOAD ENDPOINT
+// ==========================================
 app.post("/api/upload", express.json({ limit: "5mb" }), (req, res) => {
   const auth = req.headers.authorization;
   if (auth !== `Bearer ${process.env.UPLOAD_KEY}`) {
     console.warn("Unauthorized upload attempt blocked.");
     return res.status(401).send("Unauthorized");
   }
+
   try {
-    // Accept wrapped format { lastUpdated, data:{players or playerList} }
     const { lastUpdated, data } = req.body || {};
     const wrapped = normalizeData(
       JSON.stringify(
@@ -170,14 +180,14 @@ app.post("/api/upload", express.json({ limit: "5mb" }), (req, res) => {
     console.log(`✅ Player data updated (${wrapped.players.length} players).`);
     res.json({ success: true });
   } catch (err) {
-    console.error("Failed to save player data:", err);
+    console.error("❌ Failed to save player data:", err);
     res.status(500).json({ success: false, error: err.message });
   }
 });
 
-// ----------------------------------------------------
-// JSON APIs (handy for overlays/extensions later)
-// ----------------------------------------------------
+// ==========================================
+// API ROUTES
+// ==========================================
 app.get("/api/player", (req, res) => {
   const user = (req.query.user || "").toLowerCase();
   const { ledger, player } = getPlayerByLogin(user);
@@ -190,70 +200,62 @@ app.get("/api/all", (req, res) => {
   res.json(ledger);
 });
 
+// ==========================================
+// FRONTEND ROUTES
+// ==========================================
+
+// 🏠 Homepage: login or redirect
 app.get("/", (req, res) => {
   const user = req.session.username;
 
-  // If logged in → redirect straight to their status page
-  if (user) {
-    return res.redirect(`/status?user=${encodeURIComponent(user)}`);
-  }
+  if (user) return res.redirect(`/status?user=${encodeURIComponent(user)}`);
 
-  // Otherwise → show login page
   res.send(`
     <html>
-    <head>
-      <title>Tavern Dashboard</title>
-      <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&display=swap" rel="stylesheet">
-      <style>
-        body {
-          background: #1c1a18;
-          color: #d9c79e;
-          font-family: 'Cinzel', serif;
-          text-align: center;
-          padding: 80px;
-        }
-        .card {
-          border: 2px solid #a27c49;
-          border-radius: 12px;
-          padding: 40px;
-          display: inline-block;
-          background: #2a2623;
-          box-shadow: 0 0 20px rgba(255,220,160,0.1);
-        }
-        a.button {
-          display: inline-block;
-          padding: 12px 30px;
-          background: #a27c49;
-          color: #1c1a18;
-          text-decoration: none;
-          border-radius: 6px;
-          font-weight: bold;
-          font-size: 18px;
-        }
-        a.button:hover { background: #d4a96f; }
-      </style>
-    </head>
-    <body>
-      <div class="card">
-        <h1>Welcome to the Tavern Dashboard</h1>
-        <p>View your adventurer's stats and honour within the Tavern.</p>
-        <a href="/auth/twitch" class="button">Login with Twitch</a>
-      </div>
-    </body>
+      <head>
+        <title>Tavern Dashboard</title>
+        <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&display=swap" rel="stylesheet">
+        <style>
+          body {
+            background: #1c1a18;
+            color: #d9c79e;
+            font-family: 'Cinzel', serif;
+            text-align: center;
+            padding: 80px;
+          }
+          .card {
+            border: 2px solid #a27c49;
+            border-radius: 12px;
+            padding: 40px;
+            display: inline-block;
+            background: #2a2623;
+            box-shadow: 0 0 20px rgba(255,220,160,0.1);
+          }
+          a.button {
+            display: inline-block;
+            padding: 12px 30px;
+            background: #a27c49;
+            color: #1c1a18;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 18px;
+          }
+          a.button:hover { background: #d4a96f; }
+        </style>
+      </head>
+      <body>
+        <div class="card">
+          <h1>Welcome to the Tavern Dashboard</h1>
+          <p>View your adventurer's stats and honour within the Tavern.</p>
+          <a href="/auth/twitch" class="button">Login with Twitch</a>
+        </div>
+      </body>
     </html>
   `);
 });
 
-app.get("/logout", (req, res) => {
-  req.session.destroy(() => {
-    res.redirect("/");
-  });
-});
-
-
-// ----------------------------------------------------
-// Status page
-// ----------------------------------------------------
+// 🧙‍♂️ Player status page
 app.get("/status", (req, res) => {
   const user = (req.query.user || "").toLowerCase();
   const { ledger, player } = getPlayerByLogin(user);
@@ -283,8 +285,6 @@ app.get("/status", (req, res) => {
     <html>
     <head>
       <title>${player.username}'s Tavern Status</title>
-      <link rel="preconnect" href="https://fonts.googleapis.com">
-      <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
       <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&display=swap" rel="stylesheet">
       <style>
         body {
@@ -315,6 +315,7 @@ app.get("/status", (req, res) => {
         <p class="inv"><b>Inventory:</b> ${player.inventory.length ? player.inventory.join(", ") : "None"}</p>
         <p class="muted">Last updated: ${lastUpdated}</p>
         <p class="muted" id="timer"></p>
+        <p><a href="/logout">Logout</a></p>
       </div>
       <script>
         let seconds = 60;
@@ -332,7 +333,9 @@ app.get("/status", (req, res) => {
   `);
 });
 
-// ----------------------------------------------------
-app.listen(PORT, () =>
-  console.log(`🍺 Tavern Dashboard running at http://localhost:${PORT}`)
-);
+// ==========================================
+// START SERVER
+// ==========================================
+app.listen(PORT, () => {
+  console.log(`🍺 Tavern Dashboard running at http://localhost:${PORT}`);
+});
