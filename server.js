@@ -7,9 +7,6 @@ import cors from "cors";
 import fetch from "node-fetch";
 import session from "express-session";
 
-app.use(cors());
-app.use(express.static("public"));
-
 const PORT = process.env.PORT || 3000;
 
 // 🔐 Twitch app credentials
