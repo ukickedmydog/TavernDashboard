@@ -1,8 +1,6 @@
-// server.js
 // ==========================================
-// Tavern Dashboard – Express + Twitch OAuth
+// Tavern Dashboard — Final Stable Version
 // ==========================================
-
 import express from "express";
 import session from "express-session";
 import fs from "fs";
@@ -15,14 +13,12 @@ import fetch from "node-fetch";
 // ==========================================
 const PORT = process.env.PORT || 3000;
 
-// Twitch credentials (from Render environment variables)
 const CLIENT_ID = process.env.TWITCH_CLIENT_ID;
 const CLIENT_SECRET = process.env.TWITCH_CLIENT_SECRET;
 const REDIRECT_URI =
   process.env.REDIRECT_URI ||
   "https://taverndashboard.onrender.com/auth/twitch/callback";
 
-// Player data file path
 const PLAYER_DATA_PATH =
   process.env.PLAYER_DATA_PATH || path.resolve("./TavernPlayers.json");
 
@@ -34,17 +30,17 @@ app.use(cors());
 app.use(express.static("public"));
 app.use(express.json());
 
-// 🔐 Session handling
+// 🔐 Session setup (must come before any routes)
 app.use(
   session({
     secret: process.env.SESSION_SECRET || "tavernsecret",
     resave: false,
-    saveUninitialized: true,
+    saveUninitialized: false,
   })
 );
 
 // ==========================================
-// UTILITIES
+// FILE & DATA HELPERS
 // ==========================================
 function safeReadFile(p) {
   try {
@@ -64,7 +60,6 @@ function normalizeData(rawJson) {
     parsed = { lastUpdated: "Never", players: [] };
   }
 
-  // Accept multiple root layouts
   const data = parsed.data || parsed;
   const players =
     data.players || data.playerList || (Array.isArray(data) ? data : []);
@@ -102,7 +97,7 @@ function getPlayerByLogin(login) {
 }
 
 // ==========================================
-// TWITCH OAUTH ROUTES
+// TWITCH AUTH
 // ==========================================
 app.get("/auth/twitch", (req, res) => {
   const authUrl =
@@ -140,12 +135,13 @@ app.get("/auth/twitch/callback", async (req, res) => {
       Authorization: `Bearer ${token.access_token}`,
     },
   });
+
   const userData = await userRes.json();
   const username = userData?.data?.[0]?.login?.toLowerCase();
 
   if (!username) return res.status(400).send("Could not fetch Twitch user.");
 
-  // Save username in session
+  // ✅ Store in session
   req.session.username = username;
   console.log(`[LOGIN] ${username} logged in.`);
   res.redirect("/");
@@ -203,12 +199,14 @@ app.get("/api/all", (req, res) => {
 // ==========================================
 // FRONTEND ROUTES
 // ==========================================
-
-// 🏠 Homepage: login or redirect
 app.get("/", (req, res) => {
-  const user = req.session.username;
+  const user = req.session?.username;
 
-  if (user) return res.redirect(`/status?user=${encodeURIComponent(user)}`);
+  // ✅ redirect only if logged in
+  if (user) {
+    console.log("[SESSION] Redirecting", user, "to /status");
+    return res.redirect(`/status?user=${encodeURIComponent(user)}`);
+  }
 
   res.send(`
     <html>
@@ -255,7 +253,6 @@ app.get("/", (req, res) => {
   `);
 });
 
-// 🧙‍♂️ Player status page
 app.get("/status", (req, res) => {
   const user = (req.query.user || "").toLowerCase();
   const { ledger, player } = getPlayerByLogin(user);
@@ -336,6 +333,6 @@ app.get("/status", (req, res) => {
 // ==========================================
 // START SERVER
 // ==========================================
-app.listen(PORT, () => {
-  console.log(`🍺 Tavern Dashboard running at http://localhost:${PORT}`);
-});
+app.listen(PORT, () =>
+  console.log(`🍺 Tavern Dashboard running at http://localhost:${PORT}`)
+);
