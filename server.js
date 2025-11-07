@@ -44,7 +44,7 @@ const REDIRECT_URI =
 
 // ✅ REPLACE THIS with your own GitHub raw file URL
 const GITHUB_JSON_URL =
-  "https://raw.githubusercontent.com/ukickedmydog/TavernDashboard/refs/heads/main/TavernPlayers.json?token=GHSAT0AAAAAADOSONFB4A75A6AQBUJ7TQ6E2IOOYJQ"; 
+  "https://raw.githubusercontent.com/ukickedmydog/TavernDashboard/refs/heads/main/TavernPlayers.json; 
 
 // ==========================================
 // DATA HELPERS
@@ -54,12 +54,15 @@ function normalizeData(rawJson) {
   try {
     parsed = JSON.parse(rawJson);
   } catch {
-    parsed = { lastUpdated: "Never", players: [] };
+    parsed = {};
   }
 
-  const data = parsed.data || parsed;
   const players =
-    data.players || data.playerList || (Array.isArray(data) ? data : []);
+    parsed.players ||
+    parsed.playerList ||
+    parsed.data?.players ||
+    parsed.data?.playerList ||
+    (Array.isArray(parsed) ? parsed : []);
 
   const normalizedPlayers = players.map((p) => {
     const uname = p.username || p.name || p.user || "";
@@ -76,6 +79,11 @@ function normalizeData(rawJson) {
       inventory: Array.isArray(p.inventory) ? p.inventory : [],
     };
   });
+
+  const lastUpdated = parsed.lastUpdated || new Date().toISOString();
+  return { lastUpdated, players: normalizedPlayers };
+}
+
 
   const lastUpdated = parsed.lastUpdated || new Date().toISOString();
   return { lastUpdated, players: normalizedPlayers };
