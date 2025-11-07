@@ -36,17 +36,22 @@ app.use(express.json());
 // ==========================================
 // SESSION (PERSISTENT)
 // ==========================================
+app.set("trust proxy", 1); // ✅ required for secure cookies behind Render proxy
+
 app.use(
   session({
     secret: process.env.SESSION_SECRET || "tavernsecret",
     resave: false,
     saveUninitialized: false,
     cookie: {
-      secure: true,
-      sameSite: "none",
+      secure: true,         // ✅ only send over HTTPS
+      httpOnly: true,       // ✅ prevents JS access to cookie
+      sameSite: "none",     // ✅ required for cross-site OAuth
+      maxAge: 1000 * 60 * 60 * 24, // 1 day
     },
   })
 );
+
 
 // ==========================================
 // DATA HELPERS
