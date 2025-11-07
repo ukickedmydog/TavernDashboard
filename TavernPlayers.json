@@ -2,7 +2,7 @@
     "playerList": [
         {
             "username": "dogoftheoccult",
-            "gold": 40,
+            "gold": 32,
             "health": 100,
             "drunkenness": 0,
             "honour": 0,
@@ -14,7 +14,8 @@
                 "Regular"
             ],
             "inventory": [
-                "beer"
+                "beer",
+                "cheese"
             ]
         }
     ]
