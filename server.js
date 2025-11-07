@@ -1,8 +1,9 @@
 // ==========================================
-// Tavern Dashboard — Final Stable Version
+// Tavern Dashboard — Final (Persistent Sessions)
 // ==========================================
 import express from "express";
 import session from "express-session";
+import FileStoreFactory from "session-file-store";
 import fs from "fs";
 import path from "path";
 import cors from "cors";
@@ -30,9 +31,18 @@ app.use(cors());
 app.use(express.static("public"));
 app.use(express.json());
 
-// 🔐 Session setup (must come before any routes)
+// ==========================================
+// SESSION (PERSISTENT)
+// ==========================================
+const FileStore = FileStoreFactory(session);
+
 app.use(
   session({
+    store: new FileStore({
+      path: "./sessions", // saves small session files
+      retries: 1,
+      ttl: 86400, // 1 day
+    }),
     secret: process.env.SESSION_SECRET || "tavernsecret",
     resave: false,
     saveUninitialized: false,
@@ -40,7 +50,7 @@ app.use(
 );
 
 // ==========================================
-// FILE & DATA HELPERS
+// DATA HELPERS
 // ==========================================
 function safeReadFile(p) {
   try {
@@ -141,16 +151,16 @@ app.get("/auth/twitch/callback", async (req, res) => {
 
   if (!username) return res.status(400).send("Could not fetch Twitch user.");
 
-  // ✅ Store in session
+  // ✅ Store username in session (persistent)
   req.session.username = username;
-  console.log(`[LOGIN] ${username} logged in.`);
-  res.redirect("/");
+  req.session.save(() => {
+    console.log(`[LOGIN] ${username} logged in.`);
+    res.redirect("/");
+  });
 });
 
 app.get("/logout", (req, res) => {
-  req.session.destroy(() => {
-    res.redirect("/");
-  });
+  req.session.destroy(() => res.redirect("/"));
 });
 
 // ==========================================
@@ -182,27 +192,11 @@ app.post("/api/upload", express.json({ limit: "5mb" }), (req, res) => {
 });
 
 // ==========================================
-// API ROUTES
-// ==========================================
-app.get("/api/player", (req, res) => {
-  const user = (req.query.user || "").toLowerCase();
-  const { ledger, player } = getPlayerByLogin(user);
-  if (!player) return res.status(404).json({ error: "Player not found" });
-  res.json({ lastUpdated: ledger.lastUpdated, player });
-});
-
-app.get("/api/all", (req, res) => {
-  const ledger = loadLedger();
-  res.json(ledger);
-});
-
-// ==========================================
 // FRONTEND ROUTES
 // ==========================================
 app.get("/", (req, res) => {
   const user = req.session?.username;
 
-  // ✅ redirect only if logged in
   if (user) {
     console.log("[SESSION] Redirecting", user, "to /status");
     return res.redirect(`/status?user=${encodeURIComponent(user)}`);
