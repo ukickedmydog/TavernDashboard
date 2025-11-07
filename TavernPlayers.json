@@ -3,12 +3,12 @@
         {
             "username": "dogoftheoccult",
             "gold": 50,
-            "health": 100,
+            "health": 85,
             "drunkenness": 0,
-            "honour": 0,
-            "questsCompleted": 0,
+            "honour": 6,
+            "questsCompleted": 1,
             "lastDailyClaim": "",
-            "lastQuestDate": "",
+            "lastQuestDate": "2025-11-07",
             "currentTitle": "Regular",
             "titles": [
                 "Regular"
