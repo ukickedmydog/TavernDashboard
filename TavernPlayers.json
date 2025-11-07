@@ -2,22 +2,7 @@
     "playerList": [
         {
             "username": "dogoftheoccult",
-            "gold": 60,
-            "health": 100,
-            "drunkenness": 0,
-            "honour": 4,
-            "questsCompleted": 1,
-            "lastDailyClaim": "",
-            "lastQuestDate": "2025-11-06",
-            "currentTitle": "Regular",
-            "titles": [
-                "Regular"
-            ],
-            "inventory": []
-        },
-        {
-            "username": "streamelements",
-            "gold": 50,
+            "gold": 40,
             "health": 100,
             "drunkenness": 0,
             "honour": 0,
@@ -28,7 +13,9 @@
             "titles": [
                 "Regular"
             ],
-            "inventory": []
+            "inventory": [
+                "beer"
+            ]
         }
     ]
 }
