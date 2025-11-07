@@ -156,11 +156,12 @@ app.get("/auth/twitch/callback", async (req, res) => {
   if (!username) return res.status(400).send("Could not fetch Twitch user.");
 
   // ✅ Store username in session (persistent)
-  req.session.username = username;
-  req.session.save(() => {
-    console.log(`[LOGIN] ${username} logged in.`);
-    res.redirect("/");
-  });
+req.session.username = username;
+req.session.save(() => {
+  console.log(`[LOGIN] ${username} logged in.`);
+  res.redirect(`/status?user=${encodeURIComponent(username)}`);
+});
+
 });
 
 app.get("/logout", (req, res) => {
