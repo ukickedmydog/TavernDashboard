@@ -1,15 +1,35 @@
 // ==========================================
-// Tavern Dashboard — Final (Persistent Sessions)
+// Tavern Dashboard — Live GitHub Data Version
 // ==========================================
 import express from "express";
 import session from "express-session";
-import FileStoreFactory from "session-file-store";
 import fs from "fs";
-import path from "path";
 import cors from "cors";
 import fetch from "node-fetch";
 
-if (!fs.existsSync("./sessions")) fs.mkdirSync("./sessions");
+// ✅ Required for secure cookies behind Render
+const app = express();
+app.set("trust proxy", 1);
+app.use(cors());
+app.use(express.static("public"));
+app.use(express.json());
+
+// ==========================================
+// SESSION (in-memory, stable for HTTPS Render)
+// ==========================================
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || "tavernsecret",
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      secure: true,      // HTTPS only
+      sameSite: "none",  // allows Twitch OAuth redirect
+      httpOnly: true,
+      maxAge: 1000 * 60 * 60 * 24, // 24 hours
+    },
+  })
+);
 
 // ==========================================
 // CONFIGURATION
@@ -22,50 +42,13 @@ const REDIRECT_URI =
   process.env.REDIRECT_URI ||
   "https://taverndashboard.onrender.com/auth/twitch/callback";
 
-const PLAYER_DATA_PATH =
-  process.env.PLAYER_DATA_PATH || path.resolve("./TavernPlayers.json");
-
-// ==========================================
-// APP INITIALIZATION
-// ==========================================
-const app = express();
-app.use(cors());
-app.use(express.static("public"));
-app.use(express.json());
-
-// ==========================================
-// SESSION (PERSISTENT)
-// ==========================================
-app.set("trust proxy", 1); // ✅ required for secure cookies behind Render proxy
-
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET || "tavernsecret",
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-      secure: true,         // ✅ only send over HTTPS
-      httpOnly: true,       // ✅ prevents JS access to cookie
-      sameSite: "none",     // ✅ required for cross-site OAuth
-      maxAge: 1000 * 60 * 60 * 24, // 1 day
-    },
-  })
-);
-
+// ✅ REPLACE THIS with your own GitHub raw file URL
+const GITHUB_JSON_URL =
+  "https://raw.githubusercontent.com/ukickedmydog/TavernDashboard/main/TavernPlayers.json"; 
 
 // ==========================================
 // DATA HELPERS
 // ==========================================
-function safeReadFile(p) {
-  try {
-    return fs.readFileSync(p, "utf8");
-  } catch {
-    const blank = { lastUpdated: "Never", players: [] };
-    fs.writeFileSync(p, JSON.stringify(blank, null, 2));
-    return JSON.stringify(blank);
-  }
-}
-
 function normalizeData(rawJson) {
   let parsed;
   try {
@@ -98,16 +81,17 @@ function normalizeData(rawJson) {
   return { lastUpdated, players: normalizedPlayers };
 }
 
-function loadLedger() {
-  const raw = safeReadFile(PLAYER_DATA_PATH);
-  return normalizeData(raw);
-}
-
-function getPlayerByLogin(login) {
-  const ledger = loadLedger();
-  const userLower = (login || "").toLowerCase();
-  const found = ledger.players.find((p) => p.usernameLower === userLower);
-  return { ledger, player: found };
+// ✅ Fetches latest data directly from GitHub
+async function loadLedger() {
+  try {
+    const res = await fetch(GITHUB_JSON_URL, { cache: "no-store" });
+    if (!res.ok) throw new Error(`GitHub fetch failed: ${res.status}`);
+    const text = await res.text();
+    return normalizeData(text);
+  } catch (err) {
+    console.error("[TAVERN] Failed to fetch data from GitHub:", err.message);
+    return { lastUpdated: "Never", players: [] };
+  }
 }
 
 // ==========================================
@@ -155,13 +139,11 @@ app.get("/auth/twitch/callback", async (req, res) => {
 
   if (!username) return res.status(400).send("Could not fetch Twitch user.");
 
-  // ✅ Store username in session (persistent)
-req.session.username = username;
-req.session.save(() => {
-  console.log(`[LOGIN] ${username} logged in.`);
-  res.redirect(`/status?user=${encodeURIComponent(username)}`);
-});
-
+  req.session.username = username;
+  req.session.save(() => {
+    console.log(`[LOGIN] ${username} logged in.`);
+    res.redirect(`/status?user=${encodeURIComponent(username)}`);
+  });
 });
 
 app.get("/logout", (req, res) => {
@@ -169,51 +151,15 @@ app.get("/logout", (req, res) => {
 });
 
 // ==========================================
-// UNITY UPLOAD ENDPOINT
-// ==========================================
-app.post("/api/upload", express.json({ limit: "5mb" }), (req, res) => {
-  const auth = req.headers.authorization;
-  if (auth !== `Bearer ${process.env.UPLOAD_KEY}`) {
-    console.warn("Unauthorized upload attempt blocked.");
-    return res.status(401).send("Unauthorized");
-  }
-
-  try {
-    const { lastUpdated, data } = req.body || {};
-    const wrapped = normalizeData(
-      JSON.stringify(
-        data
-          ? { lastUpdated: lastUpdated || new Date().toISOString(), ...data }
-          : req.body
-      )
-    );
-    fs.writeFileSync(PLAYER_DATA_PATH, JSON.stringify(wrapped, null, 2));
-    console.log(`✅ Player data updated (${wrapped.players.length} players).`);
-    res.json({ success: true });
-  } catch (err) {
-    console.error("❌ Failed to save player data:", err);
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
-
-// ==========================================
 // FRONTEND ROUTES
 // ==========================================
 app.get("/", (req, res) => {
   const user = req.session?.username;
-
-  // ✅ If session username is missing, but Twitch stored a cookie, reload from query
-  if (!user && req.query.user) {
-    req.session.username = req.query.user.toLowerCase();
+  if (user) {
+    console.log("[SESSION] Redirecting", user, "to /status");
+    return res.redirect(`/status?user=${encodeURIComponent(user)}`);
   }
 
-  // ✅ If we now have a username, send them straight to their dashboard
-  if (req.session.username) {
-    console.log("[SESSION] Redirecting", req.session.username, "to /status");
-    return res.redirect(`/status?user=${encodeURIComponent(req.session.username)}`);
-  }
-
-  // otherwise show login screen
   res.send(`
     <html>
       <head>
@@ -259,10 +205,10 @@ app.get("/", (req, res) => {
   `);
 });
 
-
-app.get("/status", (req, res) => {
+app.get("/status", async (req, res) => {
   const user = (req.query.user || "").toLowerCase();
-  const { ledger, player } = getPlayerByLogin(user);
+  const ledger = await loadLedger();
+  const player = ledger.players.find((p) => p.usernameLower === user);
 
   if (!player) {
     return res.send(`
