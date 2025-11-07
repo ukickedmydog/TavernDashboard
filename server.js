@@ -44,7 +44,7 @@ const REDIRECT_URI =
 
 // ✅ REPLACE THIS with your own GitHub raw file URL
 const GITHUB_JSON_URL =
-  "https://raw.githubusercontent.com/ukickedmydog/TavernDashboard/main/TavernPlayers.json"; 
+  "https://raw.githubusercontent.com/ukickedmydog/TavernDashboard/refs/heads/main/TavernPlayers.json?token=GHSAT0AAAAAADOSONFB4A75A6AQBUJ7TQ6E2IOOYJQ"; 
 
 // ==========================================
 // DATA HELPERS
