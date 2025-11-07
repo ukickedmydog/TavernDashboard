@@ -9,6 +9,8 @@ import path from "path";
 import cors from "cors";
 import fetch from "node-fetch";
 
+if (!fs.existsSync("./sessions")) fs.mkdirSync("./sessions");
+
 // ==========================================
 // CONFIGURATION
 // ==========================================
