@@ -36,27 +36,17 @@ app.use(express.json());
 // ==========================================
 // SESSION (PERSISTENT)
 // ==========================================
-const FileStore = FileStoreFactory(session);
-
 app.use(
   session({
-    store: new FileStore({
-      path: "./sessions",
-      retries: 1,
-      ttl: 86400,
-    }),
     secret: process.env.SESSION_SECRET || "tavernsecret",
     resave: false,
     saveUninitialized: false,
-
-    // ✅ add these cookie options:
     cookie: {
-      secure: true,        // only send over HTTPS
-      sameSite: "none",    // allow cross-site cookies (needed for Twitch redirect)
+      secure: true,
+      sameSite: "none",
     },
   })
 );
-
 
 // ==========================================
 // DATA HELPERS
