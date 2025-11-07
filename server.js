@@ -44,10 +44,14 @@ const REDIRECT_URI =
 
 // ✅ REPLACE THIS with your own GitHub raw file URL
 const GITHUB_JSON_URL =
-  "https://raw.githubusercontent.com/ukickedmydog/TavernDashboard/refs/heads/main/TavernPlayers.json"; 
+  "https://raw.githubusercontent.com/ukickedmydog/TavernDashboard/main/TavernPlayers.json";
+
 
 // ==========================================
 // DATA HELPERS
+// ==========================================
+// ==========================================
+// NORMALIZE PLAYER DATA (supports playerList/players)
 // ==========================================
 function normalizeData(rawJson) {
   let parsed;
@@ -58,24 +62,25 @@ function normalizeData(rawJson) {
   }
 
   const players =
-    parsed.players ||
     parsed.playerList ||
-    parsed.data?.players ||
-    parsed.data?.playerList ||
+    parsed.players ||
+    (parsed.data && (parsed.data.playerList || parsed.data.players)) ||
     (Array.isArray(parsed) ? parsed : []);
 
   const normalizedPlayers = players.map((p) => {
-    const uname = p.username || p.name || p.user || "";
+    const uname = (p.username || p.name || p.user || "").toString();
     return {
       username: uname,
       usernameLower: uname.toLowerCase(),
-      currentTitle: p.currentTitle || "Regular",
+      currentTitle: Array.isArray(p.titles) && p.titles.length
+        ? (p.currentTitle || p.titles[0] || "Regular")
+        : (p.currentTitle || "Regular"),
       titles: Array.isArray(p.titles) ? p.titles : ["Regular"],
-      gold: p.gold ?? 0,
-      health: p.health ?? 100,
-      drunkenness: p.drunkenness ?? 0,
-      honour: p.honour ?? 0,
-      questsCompleted: p.questsCompleted ?? 0,
+      gold: Number.isFinite(p.gold) ? p.gold : 0,
+      health: Number.isFinite(p.health) ? p.health : 100,
+      drunkenness: Number.isFinite(p.drunkenness) ? p.drunkenness : 0,
+      honour: Number.isFinite(p.honour) ? p.honour : 0,
+      questsCompleted: Number.isFinite(p.questsCompleted) ? p.questsCompleted : 0,
       inventory: Array.isArray(p.inventory) ? p.inventory : [],
     };
   });
@@ -83,6 +88,37 @@ function normalizeData(rawJson) {
   const lastUpdated = parsed.lastUpdated || new Date().toISOString();
   return { lastUpdated, players: normalizedPlayers };
 }
+
+// ==========================================
+// FETCH PLAYER DATA DIRECTLY FROM GITHUB (CACHED 1 MIN)
+// ==========================================
+let cachedLedger = null;
+let lastFetchTime = 0;
+
+async function loadLedger() {
+  const now = Date.now();
+  const cacheDuration = 60 * 1000; // 1 minute
+
+  if (cachedLedger && now - lastFetchTime < cacheDuration) {
+    return cachedLedger;
+  }
+
+  try {
+    const res = await fetch(GITHUB_JSON_URL, { cache: "no-store" });
+    if (!res.ok) throw new Error(`GitHub fetch failed: ${res.status}`);
+    const text = await res.text();
+
+    const data = normalizeData(text);
+    cachedLedger = data;
+    lastFetchTime = now;
+    return data;
+  } catch (err) {
+    console.error("[TAVERN] Failed to fetch data from GitHub:", err.message);
+    if (cachedLedger) return cachedLedger;
+    return { lastUpdated: "Never", players: [] };
+  }
+}
+
 
 
   const lastUpdated = parsed.lastUpdated || new Date().toISOString();
