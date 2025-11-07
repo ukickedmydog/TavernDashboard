@@ -206,15 +206,22 @@ app.post("/api/upload", express.json({ limit: "5mb" }), (req, res) => {
 app.get("/", (req, res) => {
   const user = req.session?.username;
 
-  if (user) {
-    console.log("[SESSION] Redirecting", user, "to /status");
-    return res.redirect(`/status?user=${encodeURIComponent(user)}`);
+  // ✅ If session username is missing, but Twitch stored a cookie, reload from query
+  if (!user && req.query.user) {
+    req.session.username = req.query.user.toLowerCase();
   }
 
+  // ✅ If we now have a username, send them straight to their dashboard
+  if (req.session.username) {
+    console.log("[SESSION] Redirecting", req.session.username, "to /status");
+    return res.redirect(`/status?user=${encodeURIComponent(req.session.username)}`);
+  }
+
+  // otherwise show login screen
   res.send(`
     <html>
       <head>
-        <title>Tavern Dashboard</title>
+        <title>The Tavern Ledger</title>
         <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&display=swap" rel="stylesheet">
         <style>
           body {
@@ -247,14 +254,15 @@ app.get("/", (req, res) => {
       </head>
       <body>
         <div class="card">
-          <h1>Welcome to the Tavern Dashboard</h1>
-          <p>View your adventurer's stats and honour within the Tavern.</p>
-          <a href="/auth/twitch" class="button">Login with Twitch</a>
+          <h1>The Tavern Ledger</h1>
+          <p>Record of all patrons who brave the firelight...</p>
+          <a href="/auth/twitch" class="button">Enter the Tavern</a>
         </div>
       </body>
     </html>
   `);
 });
+
 
 app.get("/status", (req, res) => {
   const user = (req.query.user || "").toLowerCase();
