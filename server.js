@@ -44,7 +44,7 @@ const REDIRECT_URI =
 
 // ✅ REPLACE THIS with your own GitHub raw file URL
 const GITHUB_JSON_URL =
-  "https://raw.githubusercontent.com/ukickedmydog/TavernDashboard/main/TavernPlayers.json";
+  "https://github.com/ukickedmydog/TavernDashboard/blob/main/TavernPlayers.json";
 
 
 // ==========================================
