@@ -120,11 +120,6 @@ async function loadLedger() {
 }
 
 
-
-  const lastUpdated = parsed.lastUpdated || new Date().toISOString();
-  return { lastUpdated, players: normalizedPlayers };
-}
-
 // ==========================================
 // FETCH PLAYER DATA DIRECTLY FROM GITHUB (CACHED 1 MIN)
 // ==========================================
