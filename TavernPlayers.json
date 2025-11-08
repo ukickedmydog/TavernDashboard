@@ -4,7 +4,7 @@
             "username": "dogoftheoccult",
             "gold": 32,
             "health": 100,
-            "drunkenness": 0,
+            "drunkenness": 1,
             "honour": 0,
             "questsCompleted": 0,
             "lastDailyClaim": "",
@@ -13,9 +13,7 @@
             "titles": [
                 "Regular"
             ],
-            "inventory": [
-                "beer"
-            ]
+            "inventory": []
         }
     ]
 }
