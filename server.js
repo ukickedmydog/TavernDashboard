@@ -119,42 +119,6 @@ async function loadLedger() {
   }
 }
 
-
-// ==========================================
-// FETCH PLAYER DATA DIRECTLY FROM GITHUB (CACHED 1 MIN)
-// ==========================================
-let cachedLedger = null;
-let lastFetchTime = 0;
-
-async function loadLedger() {
-  const now = Date.now();
-  const cacheDuration = 60 * 1000; // 1 minute
-
-  // ✅ If cache still valid, return cached data
-  if (cachedLedger && now - lastFetchTime < cacheDuration) {
-    return cachedLedger;
-  }
-
-  try {
-    const res = await fetch(GITHUB_JSON_URL, { cache: "no-store" });
-    if (!res.ok) throw new Error(`GitHub fetch failed: ${res.status}`);
-    const text = await res.text();
-    const data = normalizeData(text);
-
-    // ✅ Save to cache
-    cachedLedger = data;
-    lastFetchTime = now;
-
-    return data;
-  } catch (err) {
-    console.error("[TAVERN] Failed to fetch data from GitHub:", err.message);
-    // fallback to cached version if available
-    if (cachedLedger) return cachedLedger;
-    return { lastUpdated: "Never", players: [] };
-  }
-}
-
-
 // ==========================================
 // TWITCH AUTH
 // ==========================================
