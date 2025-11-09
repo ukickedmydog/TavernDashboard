@@ -302,6 +302,27 @@ res.send(`
 </html>
 `);
 
+  if (!player) {
+    return res.send(`
+      <html><head><title>No data</title>
+      <style>
+        body{background:#1c1a18;color:#d9c79e;font-family:Cinzel,serif;padding:40px}
+        .card{border:2px solid #a27c49;border-radius:12px;padding:20px;max-width:520px;background:#2a2623}
+      </style></head>
+      <body>
+        <div class="card">
+          <h2>No data found for <b>${user || "(no user given)"}</b></h2>
+          <p>Tip: speak once in chat so the Tavern can record you, then refresh.</p>
+          <p><a href="/">Back to Tavern Ledger</a></p>
+        </div>
+      </body></html>
+    `);
+  }
+
+  // ✅ FIX: define lastUpdated before using it
+  const lastUpdated = ledger.lastUpdated
+    ? new Date(ledger.lastUpdated).toLocaleString()
+    : "Unknown";
 
 });
 
