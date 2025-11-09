@@ -4,25 +4,19 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>The Tavern Shop | Dog of the Occult</title>
-
-<link rel="stylesheet" href="/css/tavern-style.css">
+  <link rel="stylesheet" href="/css/tavern-style.css">
 </head>
-
-
 <body>
-
   <header>
+    <nav class="nav-bar">
+      <a href="/">Home</a>
+      <a href="/shop" class="active">Shop</a>
+      <a href="/status">Status</a>
+      <a href="/contact">Contact</a>
+    </nav>
     <h1>The Tavern Shop</h1>
     <p class="subtitle">Fine ales, hearty meals, and curious curiosities.</p>
   </header>
-  
-  <nav class="nav-bar">
-  <a href="/">🏠 Home</a>
-  <a href="/shop">🍺 Shop</a>
-  <a href="/status">📜 Status</a>
-  <a href="/contact">✉️ Contact</a>
-</nav>
-
 
   <main>
     <section>
@@ -64,15 +58,5 @@
   <footer>
     © 2025 Dog of the Occult Tavern — <a href="https://twitch.tv/dogoftheoccult">Visit on Twitch</a>
   </footer>
-  
-  <script>
-  // Highlight current page in nav
-  const links = document.querySelectorAll(".nav-bar a");
-  links.forEach(link => {
-    if (link.href === window.location.href) link.classList.add("active");
-  });
-</script>
-
-
 </body>
 </html>
