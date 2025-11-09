@@ -4,152 +4,23 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Contact the Tavernkeeper</title>
-
   <link rel="stylesheet" href="/css/tavern-style.css">
 </head>
 <body>
-<style>
-    @import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=EB+Garamond&display=swap');
 
-    body {
-      margin: 0;
-      padding: 0;
-      background: radial-gradient(circle at top, #1a0f08 0%, #0e0704 100%);
-      color: #f8e7c6;
-      font-family: 'EB Garamond', serif;
-      line-height: 1.6;
-      overflow-x: hidden;
-    }
-
-    /* flickering candle glow */
-    @keyframes flicker {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.9; }
-      70% { opacity: 1; }
-      85% { opacity: 0.8; }
-    }
-
-    body::before {
-      content: "";
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: url('https://www.transparenttextures.com/patterns/aged-paper.png');
-      mix-blend-mode: overlay;
-      opacity: 0.25;
-      pointer-events: none;
-    }
-
-    header {
-      text-align: center;
-      padding: 3rem 1rem 1.5rem;
-      background: radial-gradient(circle at center, rgba(60,40,20,0.5) 0%, rgba(10,6,4,0.7) 100%);
-      box-shadow: inset 0 -20px 30px rgba(0,0,0,0.6);
-    }
-
-    h1 {
-      font-family: 'Cinzel Decorative', serif;
-      font-size: 2.8rem;
-      color: #ffde9e;
-      text-shadow: 0 0 15px rgba(255,220,150,0.4);
-      margin: 0;
-      animation: flicker 3s infinite ease-in-out;
-    }
-
-    p.subtitle {
-      font-style: italic;
-      color: #d6ba7a;
-      margin-top: 0.5rem;
-      font-size: 1.2rem;
-    }
-
-    main {
-      max-width: 900px;
-      margin: 2.5rem auto;
-      background: rgba(44,28,15,0.85);
-      border: 2px solid #7a5322;
-      border-radius: 12px;
-      padding: 2rem 2.5rem;
-      box-shadow: 0 0 35px rgba(0,0,0,0.7);
-      position: relative;
-    }
-
-    main::before, main::after {
-      content: "";
-      position: absolute;
-      width: 80px; height: 80px;
-      background: radial-gradient(circle, rgba(255,200,100,0.25) 0%, transparent 70%);
-      border-radius: 50%;
-      animation: flicker 4s infinite ease-in-out;
-    }
-    main::before { top: -40px; left: -40px; }
-    main::after { bottom: -40px; right: -40px; }
-
-    section {
-      margin-bottom: 2.5rem;
-    }
-
-    h2 {
-      color: #ffd28a;
-      font-size: 1.8rem;
-      border-bottom: 1px solid #8b5a2b;
-      padding-bottom: 0.3rem;
-      margin-bottom: 0.5rem;
-      text-shadow: 0 0 6px rgba(255,220,160,0.3);
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 0.5rem;
-    }
-
-    th, td {
-      text-align: left;
-      padding: 0.6rem 0.4rem;
-      border-bottom: 1px solid rgba(255,255,255,0.08);
-    }
-
-    th {
-      color: #e9c27b;
-      font-weight: bold;
-      letter-spacing: 0.5px;
-    }
-
-    td.item {
-      font-weight: bold;
-      color: #fff0b3;
-    }
-
-    footer {
-      text-align: center;
-      padding: 1.5rem;
-      color: #d6ba7a;
-      font-size: 0.95rem;
-      border-top: 1px solid rgba(255,255,255,0.08);
-      background: rgba(30,20,10,0.85);
-      box-shadow: inset 0 10px 20px rgba(0,0,0,0.6);
-    }
-
-    footer a {
-      color: #ffde9e;
-      text-decoration: none;
-    }
-
-    footer a:hover {
-      text-decoration: underline;
-    }
-
-    @media (max-width: 600px) {
-      main { padding: 1rem; }
-      h1 { font-size: 2rem; }
-      h2 { font-size: 1.4rem; }
-    }
-  </style>
 
   <header>
     <h1>Contact the Tavernkeeper</h1>
     <p class="subtitle">For whispers, tales, or business inquiries.</p>
   </header>
+  
+  <nav class="nav-bar">
+  <a href="/">🏠 Home</a>
+  <a href="/shop">🍺 Shop</a>
+  <a href="/status">📜 Status</a>
+  <a href="/contact">✉️ Contact</a>
+</nav>
+
 
   <main>
     <section>
@@ -166,6 +37,15 @@
   <footer>
     © 2025 Dog of the Occult Tavern
   </footer>
+  
+  <script>
+  // Highlight current page in nav
+  const links = document.querySelectorAll(".nav-bar a");
+  links.forEach(link => {
+    if (link.href === window.location.href) link.classList.add("active");
+  });
+</script>
+
 
 </body>
 </html>
