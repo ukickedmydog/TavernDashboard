@@ -300,7 +300,7 @@ app.get("/status", async (req, res) => {
         <p><a href="/logout">Logout</a></p>
       </div>
       <script>
-        let seconds = 60;
+        let seconds = 15;
         const t = document.getElementById("timer");
         function tick(){
           t.textContent = "Refreshing in " + seconds + "s...";
