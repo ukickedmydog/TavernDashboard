@@ -1,53 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>The Tavern | Dog of the Occult</title>
   <link rel="stylesheet" href="/css/tavern-style.css">
 </head>
-
-
 <body>
-  <header>
-    <h1>The Tavern</h1>
-    <p class="subtitle">Where legends are born, one drink at a time.</p>
-  </header>
-
-<nav class="nav-bar">
-  <a href="/">🏠 Home</a>
-  <a href="/shop">🍺 Shop</a>
-  <a href="/status">📜 Status</a>
-  <a href="/contact">✉️ Contact</a>
-</nav>
-
-  <main>
-    <section>
-      <p>
-        Welcome, traveler. You’ve stumbled upon the <b>Dog of the Occult’s Tavern</b> —
-        a living world within Twitch where viewers become patrons, earn gold,
-        buy drinks, and embark on daily quests for glory.
-      </p>
-      <p>
-        Speak in chat to join the tavern, check your <code>!status</code>, or
-        take on a <code>!quest</code> to earn honour and coin.
-      </p>
-      <p><a href="/status" class="btn">View Your Status</a> | <a href="/shop">Visit the Shop</a> | <a href="/contact">Contact</a></p>
-    </section>
-  </main>
-
-  <footer>
-    © 2025 Dog of the Occult Tavern
-  </footer>
-  
-  <script>
-  // Highlight current page in nav
-  const links = document.querySelectorAll(".nav-bar a");
-  links.forEach(link => {
-    if (link.href === window.location.href) link.classList.add("active");
-  });
-</script>
-
-
+  <div class="container">
+    <div class="card">
+      <h1>Welcome to The Tavern</h1>
+      <p>Gather ‘round the hearth, weary traveler. Here, your deeds, gold, and honor are recorded for all to see.</p>
+      <a href="/auth/twitch" class="btn">Enter the Tavern</a>
+      <p><a href="/shop">Visit the Shop</a> | <a href="/contact">Contact</a></p>
+    </div>
+  </div>
 </body>
 </html>
