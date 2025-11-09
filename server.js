@@ -105,7 +105,9 @@ async function loadLedger() {
   }
 
   try {
-    const res = await fetch(GITHUB_JSON_URL, { cache: "no-store" });
+const res = await fetch(`${GITHUB_JSON_URL}?t=${Date.now()}`, {
+  headers: { "Cache-Control": "no-cache" },
+});
     if (!res.ok) throw new Error(`GitHub fetch failed: ${res.status}`);
     const text = await res.text();
     const data = normalizeData(text);
