@@ -10,6 +10,11 @@ body {
   overflow-x: hidden;
 }
 
+html {
+  scroll-behavior: smooth;
+  background: radial-gradient(circle at top, #1a0f08, #0e0704);
+}
+
 /* flickering candle glow */
 @keyframes flicker {
   0%, 100% { opacity: 1; }
