@@ -6,6 +6,7 @@ import session from "express-session";
 import fs from "fs";
 import cors from "cors";
 import fetch from "node-fetch";
+import path from "path";
 
 // ✅ Required for secure cookies behind Render
 const app = express();
@@ -13,6 +14,15 @@ app.set("trust proxy", 1);
 app.use(cors());
 app.use(express.static("public"));
 app.use(express.json());
+
+
+import path from "path";
+app.use(express.static("public"));
+
+app.get("/", (req, res) => res.sendFile(path.resolve("public/index.html")));
+app.get("/shop", (req, res) => res.sendFile(path.resolve("public/shop.html")));
+app.get("/contact", (req, res) => res.sendFile(path.resolve("public/contact.html")));
+
 
 // ==========================================
 // SESSION (in-memory, stable for HTTPS Render)
@@ -258,6 +268,30 @@ app.get("/status", async (req, res) => {
       </body></html>
     `);
   }
+  
+  
+  // ==========================================
+// FRONTEND PAGES
+// ==========================================
+
+// 🏠 Home page (About the Tavern)
+app.get("/about", (req, res) => {
+  res.sendFile(path.resolve("public/index.html"));
+});
+
+// 🛒 Tavern Shop
+app.get("/shop", (req, res) => {
+  res.sendFile(path.resolve("public/shop.html"));
+});
+
+// 💬 Contact page
+app.get("/contact", (req, res) => {
+  res.sendFile(path.resolve("public/contact.html"));
+});
+
+  
+  
+  
 
   const lastUpdated = ledger.lastUpdated
     ? new Date(ledger.lastUpdated).toLocaleString()

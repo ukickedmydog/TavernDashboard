@@ -1,12 +1,3 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>The Tavern | Dog of the Occult</title>
-
-  <link rel="stylesheet" href="/css/tavern-style.css">
-</head>
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=EB+Garamond&display=swap');
 
@@ -144,30 +135,3 @@
       h2 { font-size: 1.4rem; }
     }
   </style>
-<body>
-  <header>
-    <h1>The Tavern</h1>
-    <p class="subtitle">Where legends are born, one drink at a time.</p>
-  </header>
-
-  <main>
-    <section>
-      <p>
-        Welcome, traveler. You’ve stumbled upon the <b>Dog of the Occult’s Tavern</b> —
-        a living world within Twitch where viewers become patrons, earn gold,
-        buy drinks, and embark on daily quests for glory.
-      </p>
-      <p>
-        Speak in chat to join the tavern, check your <code>!status</code>, or
-        take on a <code>!quest</code> to earn honour and coin.
-      </p>
-      <p><a href="/status" class="btn">View Your Status</a> | <a href="/shop">Visit the Shop</a> | <a href="/contact">Contact</a></p>
-    </section>
-  </main>
-
-  <footer>
-    © 2025 Dog of the Occult Tavern
-  </footer>
-
-</body>
-</html>
