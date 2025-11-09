@@ -178,8 +178,81 @@ res.send(`
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>${player.username} — Tavern Status</title>
+  <title>${player.username} — Tavern Ledger</title>
   <link rel="stylesheet" href="/css/tavern-style.css">
+  <style>
+    /* Ledger-specific visual style */
+    .ledger {
+      background: url('https://www.transparenttextures.com/patterns/paper-fibers.png'),
+                  radial-gradient(circle at center, rgba(60,40,20,0.8) 0%, rgba(25,18,10,0.95) 100%);
+      background-blend-mode: multiply;
+      border: 3px solid #c7a358;
+      border-radius: 16px;
+      box-shadow:
+        0 0 40px rgba(255, 220, 160, 0.2),
+        inset 0 0 60px rgba(80, 60, 30, 0.6);
+      padding: 3rem 3.5rem;
+      margin: 3rem auto;
+      max-width: 800px;
+      text-align: center;
+      color: #f9e6c5;
+      font-family: 'EB Garamond', serif;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .ledger::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 30% 30%, rgba(255,230,160,0.15), transparent 70%),
+                  radial-gradient(circle at 70% 70%, rgba(255,200,100,0.1), transparent 70%);
+      mix-blend-mode: screen;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .ledger h2 {
+      font-family: 'Cinzel Decorative', serif;
+      font-size: 2rem;
+      color: #ffde9e;
+      text-shadow: 0 0 15px rgba(255,220,160,0.3);
+      margin-bottom: 1rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    .ledger p {
+      position: relative;
+      z-index: 1;
+      font-size: 1.1rem;
+      margin: 0.6rem 0;
+    }
+
+    .ledger .muted {
+      color: #d6ba7a;
+      font-size: 0.95rem;
+    }
+
+    .ledger .btn {
+      text-decoration: none;
+      color: #2a1e0e;
+      background: #e6c06d;
+      padding: 10px 25px;
+      border-radius: 8px;
+      font-weight: bold;
+      display: inline-block;
+      margin-top: 1rem;
+      box-shadow: 0 0 10px rgba(255, 235, 160, 0.5);
+      transition: all 0.2s ease-in-out;
+    }
+
+    .ledger .btn:hover {
+      background: #f5d890;
+      transform: scale(1.05);
+    }
+
+  </style>
 </head>
 <body>
   <header>
@@ -189,19 +262,22 @@ res.send(`
       <a href="/status" class="active">Status</a>
       <a href="/contact">Contact</a>
     </nav>
-    <h1>${player.username}'s Status</h1>
-    <p class="subtitle">Recorded faithfully in the Tavern Ledger.</p>
+    <h1>The Tavern Ledger</h1>
+    <p class="subtitle">Where every patron’s deeds are inked into eternity...</p>
   </header>
 
-  <main style="text-align:center;">
-    <section>
+  <main>
+    <div class="ledger">
       <h2>${player.username} — ${player.currentTitle}</h2>
-      <p>Health: ${player.health}/100 | Gold: ${player.gold} | Drunkenness: ${player.drunkenness} | Honour: ${player.honour}</p>
-      <p>Quests Completed: ${player.questsCompleted}</p>
+      <p><b>Health:</b> ${player.health}/100</p>
+      <p><b>Gold:</b> ${player.gold}</p>
+      <p><b>Drunkenness:</b> ${player.drunkenness}</p>
+      <p><b>Honour:</b> ${player.honour}</p>
+      <p><b>Quests Completed:</b> ${player.questsCompleted}</p>
       <p><b>Inventory:</b> ${player.inventory.length ? player.inventory.join(", ") : "None"}</p>
       <p class="muted">Last updated: ${lastUpdated}</p>
       <p><a href="/logout" class="btn">Logout</a></p>
-    </section>
+    </div>
   </main>
 
   <footer>
@@ -210,11 +286,12 @@ res.send(`
 
   <script>
     let seconds = 15;
-    const t = document.createElement("p");
-    t.classList.add("muted");
-    document.querySelector("main").appendChild(t);
+    const ledger = document.querySelector('.ledger');
+    const timer = document.createElement('p');
+    timer.className = 'muted';
+    ledger.appendChild(timer);
     function tick(){
-      t.textContent = "Refreshing in " + seconds + "s...";
+      timer.textContent = "Refreshing in " + seconds + "s...";
       seconds--;
       if(seconds <= 0) location.reload();
     }
@@ -224,6 +301,7 @@ res.send(`
 </body>
 </html>
 `);
+
 
 });
 
