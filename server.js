@@ -174,25 +174,57 @@ app.get("/status", async (req, res) => {
       </body></html>`
     );
 
-  res.send(`
-  <html>
-  <head>
-    <title>${player.username}'s Status</title>
-    <link rel="stylesheet" href="/css/tavern-style.css">
-  </head>
-  <body>
-    <div class="container">
-      <div class="card">
-        <h1>${player.username} — ${player.currentTitle}</h1>
-        <p>Health: ${player.health}/100 | Gold: ${player.gold} | Drunkenness: ${player.drunkenness} | Honour: ${player.honour}</p>
-        <p>Quests Completed: ${player.questsCompleted}</p>
-        <p><b>Inventory:</b> ${player.inventory.length ? player.inventory.join(", ") : "None"}</p>
-        <p><a href="/">Return to Tavern</a></p>
-      </div>
-    </div>
-  </body>
-  </html>
-  `);
+res.send(`
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>${player.username} — Tavern Status</title>
+  <link rel="stylesheet" href="/css/tavern-style.css">
+</head>
+<body>
+  <header>
+    <nav class="nav-bar">
+      <a href="/">Home</a>
+      <a href="/shop">Shop</a>
+      <a href="/status" class="active">Status</a>
+      <a href="/contact">Contact</a>
+    </nav>
+    <h1>${player.username}'s Status</h1>
+    <p class="subtitle">Recorded faithfully in the Tavern Ledger.</p>
+  </header>
+
+  <main style="text-align:center;">
+    <section>
+      <h2>${player.username} — ${player.currentTitle}</h2>
+      <p>Health: ${player.health}/100 | Gold: ${player.gold} | Drunkenness: ${player.drunkenness} | Honour: ${player.honour}</p>
+      <p>Quests Completed: ${player.questsCompleted}</p>
+      <p><b>Inventory:</b> ${player.inventory.length ? player.inventory.join(", ") : "None"}</p>
+      <p class="muted">Last updated: ${lastUpdated}</p>
+      <p><a href="/logout" class="btn">Logout</a></p>
+    </section>
+  </main>
+
+  <footer>
+    © 2025 Dog of the Occult Tavern — <a href="https://twitch.tv/dogoftheoccult">Visit on Twitch</a>
+  </footer>
+
+  <script>
+    let seconds = 15;
+    const t = document.createElement("p");
+    t.classList.add("muted");
+    document.querySelector("main").appendChild(t);
+    function tick(){
+      t.textContent = "Refreshing in " + seconds + "s...";
+      seconds--;
+      if(seconds <= 0) location.reload();
+    }
+    tick();
+    setInterval(tick, 1000);
+  </script>
+</body>
+</html>
+`);
+
 });
 
 // ==========================================
