@@ -1,22 +1,25 @@
 // ==========================================
-// Tavern Dashboard — Multi-Page Version
+// 🏰 Tavern Dashboard - Multi-Page Version
 // ==========================================
 import express from "express";
 import session from "express-session";
+import cors from "cors";
 import fetch from "node-fetch";
 import path from "path";
 import { fileURLToPath } from "url";
 
+// Resolve current directory for ES modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
 app.set("trust proxy", 1);
-app.use(express.static(path.join(__dirname, "public")));
+app.use(cors());
 app.use(express.json());
+app.use(express.static("public")); // serves CSS + HTML files
 
 // ==========================================
-// SESSION CONFIG
+// SESSION
 // ==========================================
 app.use(
   session({
@@ -27,7 +30,7 @@ app.use(
       secure: true,
       sameSite: "none",
       httpOnly: true,
-      maxAge: 1000 * 60 * 60 * 24,
+      maxAge: 1000 * 60 * 60 * 24, // 24 hours
     },
   })
 );
@@ -42,11 +45,12 @@ const REDIRECT_URI =
   process.env.REDIRECT_URI ||
   "https://taverndashboard.onrender.com/auth/twitch/callback";
 
+// 🔗 Your GitHub TavernPlayers.json
 const GITHUB_JSON_URL =
   "https://raw.githubusercontent.com/ukickedmydog/TavernDashboard/main/TavernPlayers.json";
 
 // ==========================================
-// HELPER — Normalize player data
+// DATA HANDLING
 // ==========================================
 function normalizeData(rawJson) {
   let parsed;
@@ -55,37 +59,66 @@ function normalizeData(rawJson) {
   } catch {
     parsed = {};
   }
+
   const players =
     parsed.playerList ||
     parsed.players ||
+    (parsed.data && (parsed.data.playerList || parsed.data.players)) ||
     (Array.isArray(parsed) ? parsed : []);
-  const normalizedPlayers = players.map((p) => ({
-    username: p.username || "",
-    usernameLower: (p.username || "").toLowerCase(),
-    currentTitle: p.currentTitle || "Regular",
-    gold: p.gold || 0,
-    health: p.health || 100,
-    drunkenness: p.drunkenness || 0,
-    honour: p.honour || 0,
-    questsCompleted: p.questsCompleted || 0,
-    inventory: p.inventory || [],
-  }));
-  return normalizedPlayers;
+
+  const normalizedPlayers = players.map((p) => {
+    const uname = (p.username || p.name || p.user || "").toString();
+    return {
+      username: uname,
+      usernameLower: uname.toLowerCase(),
+      currentTitle:
+        Array.isArray(p.titles) && p.titles.length
+          ? p.currentTitle || p.titles[0] || "Regular"
+          : p.currentTitle || "Regular",
+      titles: Array.isArray(p.titles) ? p.titles : ["Regular"],
+      gold: Number.isFinite(p.gold) ? p.gold : 0,
+      health: Number.isFinite(p.health) ? p.health : 100,
+      drunkenness: Number.isFinite(p.drunkenness) ? p.drunkenness : 0,
+      honour: Number.isFinite(p.honour) ? p.honour : 0,
+      questsCompleted: Number.isFinite(p.questsCompleted)
+        ? p.questsCompleted
+        : 0,
+      inventory: Array.isArray(p.inventory) ? p.inventory : [],
+    };
+  });
+
+  const lastUpdated = parsed.lastUpdated || new Date().toISOString();
+  return { lastUpdated, players: normalizedPlayers };
 }
 
 // ==========================================
-// GITHUB FETCH (no cache, always fresh)
+// FETCH PLAYER DATA DIRECTLY FROM GITHUB (CACHED 15s)
 // ==========================================
+let cachedLedger = null;
+let lastFetchTime = 0;
+
 async function loadLedger() {
+  const now = Date.now();
+  const cacheDuration = 15 * 1000;
+
+  if (cachedLedger && now - lastFetchTime < cacheDuration) {
+    return cachedLedger;
+  }
+
   try {
     const res = await fetch(`${GITHUB_JSON_URL}?t=${Date.now()}`, {
       headers: { "Cache-Control": "no-cache" },
     });
+    if (!res.ok) throw new Error(`GitHub fetch failed: ${res.status}`);
     const text = await res.text();
-    return normalizeData(text);
+    const data = normalizeData(text);
+    cachedLedger = data;
+    lastFetchTime = now;
+    return data;
   } catch (err) {
     console.error("[TAVERN] Failed to fetch data:", err.message);
-    return [];
+    if (cachedLedger) return cachedLedger;
+    return { lastUpdated: "Never", players: [] };
   }
 }
 
@@ -93,11 +126,11 @@ async function loadLedger() {
 // TWITCH AUTH
 // ==========================================
 app.get("/auth/twitch", (req, res) => {
-  const url =
+  const authUrl =
     `https://id.twitch.tv/oauth2/authorize?client_id=${CLIENT_ID}` +
     `&redirect_uri=${encodeURIComponent(REDIRECT_URI)}` +
     `&response_type=code&scope=user:read:email`;
-  res.redirect(url);
+  res.redirect(authUrl);
 });
 
 app.get("/auth/twitch/callback", async (req, res) => {
@@ -117,7 +150,10 @@ app.get("/auth/twitch/callback", async (req, res) => {
   });
 
   const token = await tokenRes.json();
-  if (!token.access_token) return res.status(400).send("Failed to get access token.");
+  if (!token.access_token) {
+    console.error("OAuth token fetch failed:", token);
+    return res.status(400).send("Failed to get access token.");
+  }
 
   const userRes = await fetch("https://api.twitch.tv/helix/users", {
     headers: {
@@ -128,7 +164,6 @@ app.get("/auth/twitch/callback", async (req, res) => {
 
   const userData = await userRes.json();
   const username = userData?.data?.[0]?.login?.toLowerCase();
-
   if (!username) return res.status(400).send("Could not fetch Twitch user.");
 
   req.session.username = username;
@@ -143,189 +178,102 @@ app.get("/logout", (req, res) => {
 });
 
 // ==========================================
-// PAGES
+// FRONTEND PAGES
 // ==========================================
-app.get("/", (req, res) =>
-  res.sendFile(path.join(__dirname, "public", "index.html"))
-);
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+});
 
-app.get("/shop", (req, res) =>
-  res.sendFile(path.join(__dirname, "public", "shop.html"))
-);
+app.get("/shop", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "shop.html"));
+});
 
-app.get("/contact", (req, res) =>
-  res.sendFile(path.join(__dirname, "public", "contact.html"))
-);
+app.get("/contact", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "contact.html"));
+});
 
 // ==========================================
 // STATUS PAGE
 // ==========================================
 app.get("/status", async (req, res) => {
-  const user = (req.query.user || "").toLowerCase();
-  const players = await loadLedger();
-  const player = players.find((p) => p.usernameLower === user);
+  const userSession = req.session?.username;
+  const user = (req.query.user || userSession || "").toLowerCase();
 
-  if (!player)
-    return res.send(
-      `<html><body style="font-family:cinzel;color:#e6d7b8;background:#1c1a18;padding:50px;text-align:center">
-        <h2>No data found for ${user}</h2>
-        <p>Speak once in chat to be recorded, then refresh.</p>
-        <a href="/">Back to the Tavern</a>
-      </body></html>`
-    );
+  if (!user) return res.redirect("/auth/twitch");
 
-res.send(`
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>${player.username} — Tavern Ledger</title>
-  <link rel="stylesheet" href="/css/tavern-style.css">
-  <style>
-    /* Ledger-specific visual style */
-    .ledger {
-      background: url('https://www.transparenttextures.com/patterns/paper-fibers.png'),
-                  radial-gradient(circle at center, rgba(60,40,20,0.8) 0%, rgba(25,18,10,0.95) 100%);
-      background-blend-mode: multiply;
-      border: 3px solid #c7a358;
-      border-radius: 16px;
-      box-shadow:
-        0 0 40px rgba(255, 220, 160, 0.2),
-        inset 0 0 60px rgba(80, 60, 30, 0.6);
-      padding: 3rem 3.5rem;
-      margin: 3rem auto;
-      max-width: 800px;
-      text-align: center;
-      color: #f9e6c5;
-      font-family: 'EB Garamond', serif;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .ledger::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      background: radial-gradient(circle at 30% 30%, rgba(255,230,160,0.15), transparent 70%),
-                  radial-gradient(circle at 70% 70%, rgba(255,200,100,0.1), transparent 70%);
-      mix-blend-mode: screen;
-      pointer-events: none;
-      z-index: 0;
-    }
-
-    .ledger h2 {
-      font-family: 'Cinzel Decorative', serif;
-      font-size: 2rem;
-      color: #ffde9e;
-      text-shadow: 0 0 15px rgba(255,220,160,0.3);
-      margin-bottom: 1rem;
-      position: relative;
-      z-index: 1;
-    }
-
-    .ledger p {
-      position: relative;
-      z-index: 1;
-      font-size: 1.1rem;
-      margin: 0.6rem 0;
-    }
-
-    .ledger .muted {
-      color: #d6ba7a;
-      font-size: 0.95rem;
-    }
-
-    .ledger .btn {
-      text-decoration: none;
-      color: #2a1e0e;
-      background: #e6c06d;
-      padding: 10px 25px;
-      border-radius: 8px;
-      font-weight: bold;
-      display: inline-block;
-      margin-top: 1rem;
-      box-shadow: 0 0 10px rgba(255, 235, 160, 0.5);
-      transition: all 0.2s ease-in-out;
-    }
-
-    .ledger .btn:hover {
-      background: #f5d890;
-      transform: scale(1.05);
-    }
-
-  </style>
-</head>
-<body>
-  <header>
-    <nav class="nav-bar">
-      <a href="/">Home</a>
-      <a href="/shop">Shop</a>
-      <a href="/status" class="active">Status</a>
-      <a href="/contact">Contact</a>
-    </nav>
-    <h1>The Tavern Ledger</h1>
-    <p class="subtitle">Where every patron’s deeds are inked into eternity...</p>
-  </header>
-
-  <main>
-    <div class="ledger">
-      <h2>${player.username} — ${player.currentTitle}</h2>
-      <p><b>Health:</b> ${player.health}/100</p>
-      <p><b>Gold:</b> ${player.gold}</p>
-      <p><b>Drunkenness:</b> ${player.drunkenness}</p>
-      <p><b>Honour:</b> ${player.honour}</p>
-      <p><b>Quests Completed:</b> ${player.questsCompleted}</p>
-      <p><b>Inventory:</b> ${player.inventory.length ? player.inventory.join(", ") : "None"}</p>
-      <p class="muted">Last updated: ${lastUpdated}</p>
-      <p><a href="/logout" class="btn">Logout</a></p>
-    </div>
-  </main>
-
-  <footer>
-    © 2025 Dog of the Occult Tavern — <a href="https://twitch.tv/dogoftheoccult">Visit on Twitch</a>
-  </footer>
-
-  <script>
-    let seconds = 15;
-    const ledger = document.querySelector('.ledger');
-    const timer = document.createElement('p');
-    timer.className = 'muted';
-    ledger.appendChild(timer);
-    function tick(){
-      timer.textContent = "Refreshing in " + seconds + "s...";
-      seconds--;
-      if(seconds <= 0) location.reload();
-    }
-    tick();
-    setInterval(tick, 1000);
-  </script>
-</body>
-</html>
-`);
+  const ledger = await loadLedger();
+  const player = ledger.players.find((p) => p.usernameLower === user);
 
   if (!player) {
     return res.send(`
       <html><head><title>No data</title>
-      <style>
-        body{background:#1c1a18;color:#d9c79e;font-family:Cinzel,serif;padding:40px}
-        .card{border:2px solid #a27c49;border-radius:12px;padding:20px;max-width:520px;background:#2a2623}
-      </style></head>
+      <link rel="stylesheet" href="/css/tavern-style.css">
+      </head>
       <body>
-        <div class="card">
+      <nav class="nav-bar">
+        <a href="/">Home</a>
+        <a href="/shop">Shop</a>
+        <a href="/auth/twitch" class="active">Status</a>
+        <a href="/contact">Contact</a>
+      </nav>
+      <main>
+        <section>
           <h2>No data found for <b>${user || "(no user given)"}</b></h2>
           <p>Tip: speak once in chat so the Tavern can record you, then refresh.</p>
           <p><a href="/">Back to Tavern Ledger</a></p>
-        </div>
+        </section>
+      </main>
       </body></html>
     `);
   }
 
-  // ✅ FIX: define lastUpdated before using it
   const lastUpdated = ledger.lastUpdated
     ? new Date(ledger.lastUpdated).toLocaleString()
     : "Unknown";
 
+  res.send(`
+    <html>
+    <head>
+      <title>${player.username}'s Tavern Status</title>
+      <link rel="stylesheet" href="/css/tavern-style.css">
+    </head>
+    <body>
+      <nav class="nav-bar">
+        <a href="/">Home</a>
+        <a href="/shop">Shop</a>
+        <a href="/auth/twitch" class="active">Status</a>
+        <a href="/contact">Contact</a>
+      </nav>
+      <main>
+        <section class="card">
+          <h1>${player.username} — ${player.currentTitle}</h1>
+          <p>Health: ${player.health}/100 | Gold: ${player.gold} | Drunkenness: ${player.drunkenness} | Honour: ${player.honour}</p>
+          <p>Quests Completed: ${player.questsCompleted}</p>
+          <p><b>Inventory:</b> ${player.inventory.length ? player.inventory.join(", ") : "None"}</p>
+          <p class="muted">Last updated: ${lastUpdated}</p>
+          <p><a href="/logout">Logout</a></p>
+        </section>
+      </main>
+      <script>
+        let seconds = 15;
+        const timer = document.createElement("p");
+        timer.className = "muted";
+        document.querySelector(".card").appendChild(timer);
+        function tick(){
+          timer.textContent = "Refreshing in " + seconds + "s...";
+          seconds--;
+          if(seconds <= 0) location.reload();
+        }
+        tick();
+        setInterval(tick, 1000);
+      </script>
+    </body>
+    </html>
+  `);
 });
 
+// ==========================================
+// START SERVER
 // ==========================================
 app.listen(PORT, () =>
   console.log(`🍺 Tavern Dashboard running on http://localhost:${PORT}`)
