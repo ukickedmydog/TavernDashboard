@@ -17,6 +17,21 @@
                 "beer",
                 "cheese"
             ]
+        },
+        {
+            "username": "streamelements",
+            "gold": 50,
+            "health": 100,
+            "drunkenness": 0,
+            "honour": 0,
+            "questsCompleted": 0,
+            "lastDailyClaim": "",
+            "lastQuestDate": "",
+            "currentTitle": "Regular",
+            "titles": [
+                "Regular"
+            ],
+            "inventory": []
         }
     ]
 }
