@@ -3,62 +3,63 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>The Tavern Shop | Dog of the Occult</title>
+  <title>The Tavern Shop | The Rebel’s Tavern</title>
   <link rel="stylesheet" href="/css/tavern-style.css">
 </head>
 <body>
-  <header>
-<nav class="nav-bar">
-  <a href="/">Home</a>
-  <a href="/shop">Shop</a>
-  <a href="/auth/twitch" class="active">Status</a>
-  <a href="/contact">Contact</a>
-</nav>
 
-    </nav>
+  <header>
     <h1>The Tavern Shop</h1>
     <p class="subtitle">Fine ales, hearty meals, and curious curiosities.</p>
   </header>
+
+  <nav class="nav-bar">
+    <a href="/">Home</a>
+    <a href="/shop" class="active">Shop</a>
+    <a href="/auth/twitch">Status</a>
+    <a href="/contact">Contact</a>
+  </nav>
 
   <main>
     <section>
       <h2>🍺 Drinks</h2>
       <table>
-        <tr><th>Item</th><th>Cost</th><th>Description</th></tr>
-        <tr><td class="item">Beer</td><td>10 gold</td><td>A frothy mug of ale that warms the spirit.</td></tr>
-        <tr><td class="item">Wine</td><td>15 gold</td><td>A smooth vintage from distant vineyards.</td></tr>
-        <tr><td class="item">Mead</td><td>12 gold</td><td>Sweet honey brew favored by bards.</td></tr>
-        <tr><td class="item">Ale</td><td>8 gold</td><td>The tavern’s classic house brew.</td></tr>
-        <tr><td class="item">Moonshine</td><td>25 gold</td><td>Strong enough to fell a troll.</td></tr>
+        <tr><th>Item</th><th>ID</th><th>Cost</th><th>Description</th><th>Effect</th></tr>
+        <tr><td class="item">Beer</td><td>beer</td><td>10 gold</td><td>A frothy mug of ale that warms the spirit.</td><td>+1 Drunkenness</td></tr>
+        <tr><td class="item">Wine</td><td>wine</td><td>15 gold</td><td>A smooth vintage from distant vineyards.</td><td>+2 Drunkenness</td></tr>
+        <tr><td class="item">Mead</td><td>mead</td><td>12 gold</td><td>Sweet honey brew favored by bards.</td><td>+1 Drunkenness</td></tr>
+        <tr><td class="item">Ale</td><td>ale</td><td>8 gold</td><td>The tavern’s classic house brew.</td><td>+1 Drunkenness</td></tr>
+        <tr><td class="item">Moonshine</td><td>moonshine</td><td>25 gold</td><td>Strong enough to fell a troll.</td><td>+3 Drunkenness</td></tr>
       </table>
     </section>
 
     <section>
       <h2>🥖 Food</h2>
       <table>
-        <tr><th>Item</th><th>Cost</th><th>Description</th></tr>
-        <tr><td class="item">Bread</td><td>5 gold</td><td>A fresh loaf baked this morning.</td></tr>
-        <tr><td class="item">Stew</td><td>12 gold</td><td>A hearty bowl filled with meat and potatoes.</td></tr>
-        <tr><td class="item">Roast</td><td>20 gold</td><td>A roast fit for a knight.</td></tr>
-        <tr><td class="item">Cheese</td><td>8 gold</td><td>Smells a little questionable, but delicious.</td></tr>
-        <tr><td class="item">Pie</td><td>15 gold</td><td>A warm fruit pie that brings comfort.</td></tr>
+        <tr><th>Item</th><th>ID</th><th>Cost</th><th>Description</th><th>Effect</th></tr>
+        <tr><td class="item">Bread</td><td>bread</td><td>5 gold</td><td>A fresh loaf baked this morning.</td><td>+5 Health</td></tr>
+        <tr><td class="item">Stew</td><td>stew</td><td>12 gold</td><td>A hearty bowl filled with meat and potatoes.</td><td>+15 Health</td></tr>
+        <tr><td class="item">Roast</td><td>roast</td><td>20 gold</td><td>A roast fit for a knight.</td><td>+25 Health</td></tr>
+        <tr><td class="item">Cheese</td><td>cheese</td><td>8 gold</td><td>Smells a little questionable, but delicious.</td><td>+10 Health</td></tr>
+        <tr><td class="item">Pie</td><td>pie</td><td>15 gold</td><td>A warm fruit pie that brings comfort.</td><td>+20 Health</td></tr>
       </table>
     </section>
 
     <section>
       <h2>🧪 Specials</h2>
       <table>
-        <tr><th>Item</th><th>Cost</th><th>Description</th></tr>
-        <tr><td class="item">Potion</td><td>25 gold</td><td>A glowing red potion that restores vitality.</td></tr>
-        <tr><td class="item">Elixir</td><td>15 gold</td><td>Cures even the worst hangover.</td></tr>
-        <tr><td class="item">Mystery Brew</td><td>10 gold</td><td>Who knows what this does? The barkeep grins...</td></tr>
-        <tr><td class="item">Fortune Cookie</td><td>5 gold</td><td>Crack it open to reveal your fate!</td></tr>
+        <tr><th>Item</th><th>ID</th><th>Cost</th><th>Description</th><th>Effect</th></tr>
+        <tr><td class="item">Potion</td><td>potion</td><td>25 gold</td><td>A glowing red potion that restores vitality.</td><td>+30 Health</td></tr>
+        <tr><td class="item">Elixir</td><td>elixir</td><td>15 gold</td><td>Cures even the worst hangover.</td><td>-2 Drunkenness</td></tr>
+        <tr><td class="item">Mystery Brew</td><td>mysterybrew</td><td>10 gold</td><td>Who knows what this does? The barkeep grins...</td><td>Random Effect</td></tr>
+        <tr><td class="item">Fortune Cookie</td><td>fortunecookie</td><td>5 gold</td><td>Crack it open to reveal your fate!</td><td>Displays a random fortune</td></tr>
       </table>
     </section>
   </main>
 
   <footer>
-    © 2025 Dog of the Occult Tavern — <a href="https://twitch.tv/dogoftheoccult">Visit on Twitch</a>
+    © 2025 The Rebel’s Tavern — <a href="https://twitch.tv/dogoftheoccult">Visit on Twitch</a>
   </footer>
+
 </body>
 </html>
